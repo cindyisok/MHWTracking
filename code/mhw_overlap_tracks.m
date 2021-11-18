@@ -1,9 +1,9 @@
 % MHW tracking based on KNN results and overlapped value (set to 0.5)
-% Ver.1 for number conservation
+% Ver.1
 % Update date :2021/9/24
 
 % ------------------------------- Loading -------------------------------
-% load('F:/study/heatwave/data/result/MHWs_daily_nonland_knn_441.mat');
+% load('/home/sundi/OI_SST/result/MHWs_haversin_nonland_knn_441.mat');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % ==================== Before beginning the algorithm, ====================
@@ -18,6 +18,11 @@
 % end
 % =========================================================================
 
+% Input the parameter
+% -------------------------------------------------------------------------
+alpha = 0.5; 
+% -------------------------------------------------------------------------
+
 cut_off = 3;
 search = struct('day',{}, 'xloc',{},'yloc',{},'ori_day',{},'ori_order',{},'split_num',{},'split_day',{}); 
 tracks = struct('day',{}, 'xloc',{},'yloc',{},'ori_day',{},'ori_order',{},'split_num',{},'split_day',{}); 
@@ -26,7 +31,7 @@ pi180 = pi/180;
 earth_radius = 6378.137;
 
 % ------------------------------ Beginning --------------------------------
-for i = 1:length(MHWs)
+for i = 1:284 %length(MHWs)
     day = MHWs(i).day;
     mhw_xloc = MHWs(i).xloc;
     mhw_yloc = MHWs(i).yloc;
@@ -88,7 +93,7 @@ for i = 1:length(MHWs)
                     % -----------------------------------------------------------------------------------------------
                 end
 
-                idx = find(overlap >= 0.5);
+                idx = find(overlap >= alpha);
                 % =========================================================
                 % maybe find more than one mhws at t2 overlap>0.5 
                 % for splitting
@@ -202,28 +207,32 @@ for i = 1:length(MHWs)
                 end
                 
                  % part II for others
-                for i6 = 1:length(mean_x)
-%                     a(:,i6) = sqrt( (include_x(include_x>0) - mean_x(i6)).^2 ...
-%                               +( include_y(include_x>0) - mean_y(i6)).^2 );
-                    lat2 = ((mean_y(i6)-1) * 0.25 - 90) * pi180;
-                    lon2 = ((mean_x(i6)-1) * 0.25) * pi180;
-                    include_x_0 = include_x(include_x>0);
-                    include_y_0 = include_y(include_x>0);
-                    for ii = 1:length(include_x_0)
-                        lat1 = ((include_y_0(ii)-1) * 0.25 - 90) * pi180;
-                        lon1 = ((include_x_0(ii)-1) * 0.25) * pi180;
-                        dlat = lat1 - lat2;
-                        dlon = lon1 - lon2;
-                        alpha = (sin(dlat/2)).^2 + cos(lat1) .* cos(lat2) .* (sin(dlon/2)).^2;
-                        angles = 2 * atan2( sqrt(alpha), sqrt(1-alpha) );
-                        a(ii,i6) = earth_radius * angles;
-                    end
-%                     disp('This block is OK !!!')
-                end
+                include_x_0 = include_x(include_x>0);
+                include_y_0 = include_y(include_x>0);
                 
-                [s,t] = min(a,[],2);
-                include_x(include_x>0) = -t;
-                include_y(include_y>0) = -t;
+                if ~isempty(include_x_0)
+                    for i6 = 1:length(mean_x)
+    %                     a(:,i6) = sqrt( (include_x(include_x>0) - mean_x(i6)).^2 ...
+    %                               +( include_y(include_x>0) - mean_y(i6)).^2 );
+                        lat2 = ((mean_y(i6)-1) * 0.25 - 90) * pi180;
+                        lon2 = ((mean_x(i6)-1) * 0.25) * pi180;
+
+                        for ii = 1:length(include_x_0)
+                            lat1 = ((include_y_0(ii)-1) * 0.25 - 90) * pi180;
+                            lon1 = ((include_x_0(ii)-1) * 0.25) * pi180;
+                            dlat = lat1 - lat2;
+                            dlon = lon1 - lon2;
+                            alpha = (sin(dlat/2)).^2 + cos(lat1) .* cos(lat2) .* (sin(dlon/2)).^2;
+                            angles = 2 * atan2( sqrt(alpha), sqrt(1-alpha) );
+                            a(ii,i6) = earth_radius * angles;
+                        end
+    %                     disp('This block is OK !!!')
+                    end
+
+                    [s,t] = min(a,[],2);
+                    include_x(include_x>0) = -t;
+                    include_y(include_y>0) = -t;
+                end
                 
                 % append
                 for j = 1:length(find(old(i5,:)~=0))
@@ -471,22 +480,22 @@ for i = 1:length(MHWs)
     disp(i)
 end
 
-% % Add tracks that are still in the search array at the end of the
-% % time-series
-% for i=1:length(search)
-%     tracks(length(tracks)+1)=search(i);
-% end
-% 
-% %%%%%%%%%%%%%%%%%%%% remove tracks shorter than cut_off days %%%%%%%%%%%%%%
-% for i=1:length(tracks)
-%     short(i)=length(tracks(i).day)<cut_off;
-% end
-% tracks(short==1)=[];
-% short=sum(short);
-% % =========================================================================
-% 
-% % ================================ Saving =================================
-% save(['./','MHW_tracks_nonland'],'tracks','-v7.3')
-% % =============================== End saving ==============================
-% 
-% % -------------------------------- Ending ---------------------------------
+% Add tracks that are still in the search array at the end of the
+% time-series
+for i=1:length(search)
+    tracks(length(tracks)+1)=search(i);
+end
+
+%%%%%%%%%%%%%%%%%%%% remove tracks shorter than cut_off days %%%%%%%%%%%%%%
+for i=1:length(tracks)
+    short(i)=length(tracks(i).day)<cut_off;
+end
+tracks(short==1)=[];
+short=sum(short);
+% =========================================================================
+
+% ================================ Saving =================================
+save(['./','MHW_haversin_v1_tracks_nonland_0.4'],'tracks','-v7.3')
+% =============================== End saving ==============================
+
+% -------------------------------- Ending ---------------------------------
