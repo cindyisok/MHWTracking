@@ -1,10 +1,9 @@
 # MHWTracking
-This is for three-dimension MHW tracking procedure.
+Welcome to our spatio-temporal MHW tracking procedure!
 
-The flow of this free package is organized by :
-①Detect MHWs using previous definition by Hobday et al., 2016 (detect.m and main.m);
-②Tranfer the results MHWs to masks (mask.m);
-③Make KNN labels (knn_mask.m);
-④The KNN algorithm (knn_test.py);
-⑤Find the connectivity (conn.m);
-⑥The tracking procedure (mhw_overlap_tracks.m).
+This free package is organized by :
+1.Detect MHWs using previous definition by Hobday et al., 2016 (detect.m and main.m);
+2.Tranfer the results MHWs to masks (mask.m);
+3.Make KNN labels and the KNN algorithm (knn_mask.m and knn_test.py);
+4.Remove the land, discard the small regions and find the connectivity (conn.m);
+5.The tracking procedure (mhw_overlap_tracks.m).
