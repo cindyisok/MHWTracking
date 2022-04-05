@@ -3,7 +3,7 @@
 % Update date :2021/9/24
 
 % ------------------------------- Loading -------------------------------
-% load('/home/sundi/OI_SST/result/MHWs_haversin_nonland_knn_441.mat');
+% load('./MHWs_haversin_nonland_knn_441.mat');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % ==================== Before beginning the algorithm, ====================
@@ -23,7 +23,7 @@
 para_alpha = 0.5; 
 % -------------------------------------------------------------------------
 
-cut_off = 3;
+cut_off = 5;
 search = struct('day',{}, 'xloc',{},'yloc',{},'ori_day',{},'ori_order',{},'split_num',{},'split_day',{}); 
 tracks = struct('day',{}, 'xloc',{},'yloc',{},'ori_day',{},'ori_order',{},'split_num',{},'split_day',{}); 
 
