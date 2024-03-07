@@ -39,12 +39,14 @@ for day_i = datenum(1982,1,1):datenum(2016,12,31)
     disp(d)
 end
 %% 3.Make KNN labels (knn_mask.m)
+load('lon_and_lat.mat')
+%features_train:for each lat,loop each lon
 for k = 1:datenum(2016,12,31)-datenum(1982,1,1)+1
-    features_train = zeros(1440*720,2);
-    for i = 1:1440
-        for j = 1:720
-            features_train(720*(i-1)+1:720*i,1) = i;
-            features_train(720*(i-1)+j,2) = j;
+    features_train = zeros(size(lon_used,1)*size(lat_used,1),2);
+    for i = 1:size(lon_used,1)
+        for j = 1:size(lat_used,1)
+            features_train(size(lat_used,1)*(i-1)+1:size(lat_used,1)*i,2) = lon_used(i);
+            features_train(size(lat_used,1)*(i-1)+j,1) = lat_used(j);
         end
     end
     mask_trans = mask_daily(:,:,k)';
@@ -59,6 +61,8 @@ end
 % then, go next
 %% 4.Remove the land, discard the small regions and find the connectivity (conn.m)
 MHWs = struct('day',{}, 'xloc',{},'yloc',{}); 
+lon_size = size(lon,1);
+lat_size = size(lat,1);
 
 mask_daily = mask_new;
 
@@ -71,7 +75,7 @@ for i = 1:length(mask_daily(1,1,:))
     D = bwconncomp(mask,8); 
     for j = 1:D.NumObjects
 
-    [x,y] = ind2sub([1440,720],D.PixelIdxList{j});
+    [x,y] = ind2sub([lon_size,lat_size],D.PixelIdxList{j});
         if length(x)>=21*21
             count = count + 1;
             MHWs(i).yloc{count,1} = single(y);
@@ -108,6 +112,8 @@ tracks = struct('day',{}, 'xloc',{},'yloc',{},'ori_day',{},'ori_order',{},'split
 pi180 = pi/180;
 earth_radius = 6378.137;
 
+lon_size = size(lon,1);
+lat_size = size(lat,1);
 % ------------------------------ Beginning --------------------------------
 for i = 1:length(MHWs)
     day = MHWs(i).day;
@@ -149,7 +155,7 @@ for i = 1:length(MHWs)
                 loc_old(2) = search(i2).yloc(end);
             
                 overlap = zeros(size(loc_now));
-                judge1 = zeros(1440,720);
+                judge1 = zeros(lon_size,lat_size);
                 loc_old_x = cell2mat(loc_old(1));
                 loc_old_y = cell2mat(loc_old(2));
                 for k = 1:length(loc_old_x)
@@ -158,7 +164,7 @@ for i = 1:length(MHWs)
 
                 % loop for all mhws at t2
                 for i3 = 1:length(loc_now)
-                    judge2 = zeros(1440,720);
+                    judge2 = zeros(lon_size,lat_size);
                     loc_now_x = cell2mat(loc_now(i3).xloc);
                     loc_now_y = cell2mat(loc_now(i3).yloc);
                     for k2 = 1:length(loc_now_x)
@@ -216,11 +222,11 @@ for i = 1:length(MHWs)
                     search_xloc = cell2mat(search(n).xloc(end));
                     search_yloc = cell2mat(search(n).yloc(end));
                     
-                    l = zeros(1440,720);
+                    l = zeros(lon_size,lat_size);
                     for j5 = 1:length(loc_now_xloc)
                         l(loc_now_xloc(j5),loc_now_yloc(j5))=1;
                     end
-                    ll = zeros(1440,720);
+                    ll = zeros(lon_size,lat_size);
                     for j5 = 1:length(search_xloc)
                         ll(search_xloc(j5),search_yloc(j5))=1;
                     end
@@ -263,15 +269,15 @@ for i = 1:length(MHWs)
                 include_y = loc_now(idx_now(i5)).yloc{1,1};
                 for j = 1:length(find(old(i5,:)~=0)) % the last one of old maybe 0
                     % part I for those overlapped area
-                    past_2d = zeros(1440,720);
+                    past_2d = zeros(lon_size,lat_size);
                     for j3 = 1:length(search(old(i5,j)).xloc{end-1,1})
                         past_2d(search(old(i5,j)).xloc{end-1,1}(j3),search(old(i5,j)).yloc{end-1,1}(j3)) = 1;
                     end
-                    now_2d = zeros(1440,720);
+                    now_2d = zeros(lon_size,lat_size);
                     for j3 = 1:length(search(old(i5,j)).xloc{end,1})
                         now_2d(search(old(i5,j)).xloc{end,1}(j3),search(old(i5,j)).yloc{end,1}(j3)) = 1;
                     end
-                    [x3,y3] = ind2sub([1440,720],find(past_2d==1 & now_2d==1));
+                    [x3,y3] = ind2sub([lon_size,lat_size],find(past_2d==1 & now_2d==1));
                     
                     for j3 = 1:length(x3)
                         test = include_x==x3(j3) & include_y==y3(j3);
@@ -320,16 +326,16 @@ for i = 1:length(MHWs)
                     
                     else
                         % The next is for both split and merge e.g. day 285
-                        extract1 = zeros(1440,720);
+                        extract1 = zeros(lon_size,lat_size);
                         for j1 = 1:length(search(old(i5,j)).xloc{end,1})
                             extract1(search(old(i5,j)).xloc{end,1}(j1),search(old(i5,j)).yloc{end,1}(j1))=1;
                         end
-                        extract2 = zeros(1440,720);
+                        extract2 = zeros(lon_size,lat_size);
                         for j1 = 1:length(loc_now(idx_now(i5)).xloc{1,1})
                             extract2(loc_now(idx_now(i5)).xloc{1,1}(j1),loc_now(idx_now(i5)).yloc{1,1}(j1))=1;
                         end
-                        [x1,y1] = ind2sub([1440,720],find(extract1==1 & extract2==0));
-                        [x2,y2] = ind2sub([1440,720],find(extract1==1 & extract2==1));
+                        [x1,y1] = ind2sub([lon_size,lat_size],find(extract1==1 & extract2==0));
+                        [x2,y2] = ind2sub([lon_size,lat_size],find(extract1==1 & extract2==1));
                         
                         search(old(i5,j)).xloc{end,1} = [x1;x2(include_x==-j)];
                         search(old(i5,j)).yloc{end,1} = [y1;y2(include_y==-j)];
@@ -348,7 +354,7 @@ for i = 1:length(MHWs)
                     % to find connectivity
                     % ------------------------------------------------------------------------
                     for j = 1:length(find(old(i5,:)~=0))
-                        split_fusion = zeros(1440,720);
+                        split_fusion = zeros(lon_size,lat_size);
                         for k3 = 1:length(search(old(i5,j)).xloc{end,1})
                             split_fusion(search(old(i5,j)).xloc{end,1}(k3),search(old(i5,j)).yloc{end,1}(k3)) = 1;
                         end
@@ -363,19 +369,19 @@ for i = 1:length(MHWs)
                             [p,q] = max(b);
                             for k4 = 1:D.NumObjects
                                 if k4~=q
-                                    [x,y] = ind2sub([1440,720],D.PixelIdxList{k4});
+                                    [x,y] = ind2sub([lon_size,lat_size],D.PixelIdxList{k4});
                                     for k5 = 1:length(find(old(i5,:)~=0))
                                         if k5~=j
                                             append_x = [search(old(i5,k5)).xloc{end,1}; x];
                                             append_y = [search(old(i5,k5)).yloc{end,1}; y];
 
-                                            raw_search = zeros(1440,720);
+                                            raw_search = zeros(lon_size,lat_size);
                                             for k6 = 1:length(search(old(i5,k5)).xloc{end,1})
                                                 raw_search(search(old(i5,k5)).xloc{end,1}(k6),search(old(i5,k5)).yloc{end,1}(k6)) = 1;
                                             end
                                             D_raw = bwconncomp(raw_search,8); 
 
-                                            test_fusion = zeros(1440,720);
+                                            test_fusion = zeros(lon_size,lat_size);
                                             for k6 = 1:length(append_x)
                                                 test_fusion(append_x(k6),append_y(k6)) = 1;
                                             end
@@ -387,15 +393,15 @@ for i = 1:length(MHWs)
                                                 search(old(i5,k5)).yloc{end,1} = append_y;
 
                                                 % extract the x,y from the old
-                                                extract3 = zeros(1440,720);
+                                                extract3 = zeros(lon_size,lat_size);
                                                 for j2 = 1:length(x)
                                                     extract3(x(j2),y(j2))=1;
                                                 end
-                                                extract4 = zeros(1440,720);
+                                                extract4 = zeros(lon_size,lat_size);
                                                 for j2 = 1:length(search(old(i5,j)).xloc{end,1})
                                                     extract4(search(old(i5,j)).xloc{end,1}(j2),search(old(i5,j)).yloc{end,1}(j2))=1;
                                                 end
-                                                [x4,y4] = ind2sub([1440,720],find(extract3==0 & extract4==1));
+                                                [x4,y4] = ind2sub([lon_size,lat_size],find(extract3==0 & extract4==1));
                                                 search(old(i5,j)).xloc{end,1} = x4;
                                                 search(old(i5,j)).yloc{end,1} = y4;
 
@@ -417,13 +423,13 @@ for i = 1:length(MHWs)
                     % ------------------------------------------------------------------------
                     for j = 1:length(find(old(i5,:)~=0))
                         if isempty(find(j==new_fusion_loc,1))
-                            split_fusion = zeros(1440,720);
+                            split_fusion = zeros(lon_size,lat_size);
                             for k3 = 1:length(search(old(i5,j)).xloc{end,1})
                                 split_fusion(search(old(i5,j)).xloc{end,1}(k3),search(old(i5,j)).yloc{end,1}(k3)) = 1;
                             end
                             D = bwconncomp(split_fusion,8); 
                         else
-                            split_fusion = zeros(1440,720);
+                            split_fusion = zeros(lon_size,lat_size);
                             for k3 = 1:length(new_fusion(find(j==new_fusion_loc)).xloc{1,1})
                                 split_fusion(new_fusion(find(j==new_fusion_loc)).xloc{1,1}(k3),new_fusion(find(j==new_fusion_loc)).yloc{1,1}(k3)) = 1;
                             end
@@ -439,19 +445,19 @@ for i = 1:length(MHWs)
                             [p,q] = max(b);
                             for k4 = 1:D.NumObjects
                                 if k4~=q
-                                    [x,y] = ind2sub([1440,720],D.PixelIdxList{k4});
+                                    [x,y] = ind2sub([lon_size,lat_size],D.PixelIdxList{k4});
                                     for k5 = 1:length(find(old(i5,:)~=0))
                                         if k5~=j
                                             append_x = [search(old(i5,k5)).xloc{end,1}; x];
                                             append_y = [search(old(i5,k5)).yloc{end,1}; y];
 
-                                            raw_search = zeros(1440,720);
+                                            raw_search = zeros(lon_size,lat_size);
                                             for k6 = 1:length(search(old(i5,k5)).xloc{end,1})
                                                 raw_search(search(old(i5,k5)).xloc{end,1}(k6),search(old(i5,k5)).yloc{end,1}(k6)) = 1;
                                             end
                                             D_raw = bwconncomp(raw_search,8); 
 
-                                            test_fusion = zeros(1440,720);
+                                            test_fusion = zeros(lon_size,lat_size);
                                             for k6 = 1:length(append_x)
                                                 test_fusion(append_x(k6),append_y(k6)) = 1;
                                             end
@@ -463,15 +469,15 @@ for i = 1:length(MHWs)
                                                 search(old(i5,k5)).yloc{end,1} = append_y;
 
                                                 % extract the x,y from the old
-                                                extract3 = zeros(1440,720);
+                                                extract3 = zeros(lon_size,lat_size);
                                                 for j2 = 1:length(x)
                                                     extract3(x(j2),y(j2))=1;
                                                 end
-                                                extract4 = zeros(1440,720);
+                                                extract4 = zeros(lon_size,lat_size);
                                                 for j2 = 1:length(search(old(i5,j)).xloc{end,1})
                                                     extract4(search(old(i5,j)).xloc{end,1}(j2),search(old(i5,j)).yloc{end,1}(j2))=1;
                                                 end
-                                                [x4,y4] = ind2sub([1440,720],find(extract3==0 & extract4==1));
+                                                [x4,y4] = ind2sub([lon_size,lat_size],find(extract3==0 & extract4==1));
                                                 search(old(i5,j)).xloc{end,1} = x4;
                                                 search(old(i5,j)).yloc{end,1} = y4;
 

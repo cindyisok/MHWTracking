@@ -5,20 +5,21 @@ from sklearn.neighbors import KNeighborsClassifier
 for i in range(1,12785):
     
     x = io.loadmat('./features_train' + str(i) + '.mat')
-    x = x['features_train']
-    x_train = x / 4 - 0.125
-    x_train[:, 0] = x_train[:, 0] - 90
-    x_train = x_train / 180 * 3.14159
+    x = x['features_train'] 
+    # if x contains lon and lat itself, the following can be ignored
+    # x_train = x / 4 - 0.125
+    # x_train[:, 0] = x_train[:,0] - 90
+    x_train = x / 180 * 3.14159
     
     y_train = io.loadmat('./labels_train' + str(i) + '.mat')
     y_train = y_train['labels_train']
 
-    knn = KNeighborsClassifier(n_neighbors=21*21,metric='haversine')
+    knn = KNeighborsClassifier(n_neighbors=5*5,metric='haversine') # 5*5 can be revised if the region is larger
     knn.fit(x_train, y_train)
     y_pred = knn.predict(x_train)
 
     y_pred = np.array(y_pred)
-    mask_new = y_pred.reshape(1440,720)
+    mask_new = y_pred.reshape(32,32)
     io.savemat('./mask' + str(i) + '.mat', {'mask_new':mask_new})
     print(i)
     
