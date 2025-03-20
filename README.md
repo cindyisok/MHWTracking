@@ -18,5 +18,6 @@ This free package is organized by :
 Sun, D., Jing, Z., Li, F., & Wu, L. (2023). Characterizing global marine heatwaves under a spatio-temporal framework. Progress in Oceanography, 211, 102947.
 
 # Update information
-Problems in the example code has been fixed and re-updated. We thank readers for pointing out the problems.
+Problems in the example code have been fixed and re-updated. We thank readers for pointing out the problems.
+For any follow-up puzzle, do not hesitate to contact me via sundi@stu.ouc.edu.cn or raise an [issue] at github, and let's discuss them together!
 Welcome to use and modify !
